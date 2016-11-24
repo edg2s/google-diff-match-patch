@@ -70,6 +70,13 @@ var DIFF_EQUAL = 0;
 /** @typedef {{0: number, 1: string}} */
 diff_match_patch.Diff;
 
+diff_match_patch.prototype.isEqualChar = function (a, b) {
+  return a === b;
+};
+
+diff_match_patch.prototype.isEqualString = function (a, b) {
+  return a === b;
+};
 
 /**
  * Find the differences between two texts.  Simplifies the problem by stripping
@@ -102,7 +109,7 @@ diff_match_patch.prototype.diff_main = function(text1, text2, opt_checklines,
   }
 
   // Check for equality (speedup).
-  if (text1 == text2) {
+  if (this.isEqualString(text1, text2)) {
     if (text1) {
       return [[DIFF_EQUAL, text1]];
     }
@@ -335,7 +342,7 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
       }
       var y1 = x1 - k1;
       while (x1 < text1_length && y1 < text2_length &&
-             text1[x1] == text2[y1]) {
+             this.isEqualChar(text1[x1], text2[y1])) {
         x1++;
         y1++;
       }
@@ -370,8 +377,10 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
       }
       var y2 = x2 - k2;
       while (x2 < text1_length && y2 < text2_length &&
-             text1[text1_length - x2 - 1] ==
-             text2[text2_length - y2 - 1]) {
+             this.isEqualChar(
+              text1[text1_length - x2 - 1],
+              text2[text2_length - y2 - 1]
+             )) {
         x2++;
         y2++;
       }
@@ -519,7 +528,7 @@ diff_match_patch.prototype.diff_charsToLines_ = function(diffs, lineArray) {
  */
 diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
   // Quick check for common null cases.
-  if (!text1 || !text2 || text1[0] != text2[0]) {
+  if (!text1 || !text2 || !this.isEqualChar(text1[0], text2[0])) {
     return 0;
   }
   // Binary search.
@@ -529,8 +538,10 @@ diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
   var pointermid = pointermax;
   var pointerstart = 0;
   while (pointermin < pointermid) {
-    if (text1.slice(pointerstart, pointermid) ==
-        text2.slice(pointerstart, pointermid)) {
+    if (this.isEqualString(
+        text1.slice(pointerstart, pointermid),
+        text2.slice(pointerstart, pointermid)
+        )) {
       pointermin = pointermid;
       pointerstart = pointermin;
     } else {
@@ -551,7 +562,7 @@ diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
 diff_match_patch.prototype.diff_commonSuffix = function(text1, text2) {
   // Quick check for common null cases.
   if (!text1 || !text2 ||
-      text1[text1.length - 1] != text2[text2.length - 1]) {
+      !this.isEqualChar(text1[text1.length - 1], text2[text2.length - 1])) {
     return 0;
   }
   // Binary search.
@@ -561,8 +572,10 @@ diff_match_patch.prototype.diff_commonSuffix = function(text1, text2) {
   var pointermid = pointermax;
   var pointerend = 0;
   while (pointermin < pointermid) {
-    if (text1.slice(text1.length - pointermid, text1.length - pointerend) ==
-        text2.slice(text2.length - pointermid, text2.length - pointerend)) {
+    if (this.isEqualString(
+        text1.slice(text1.length - pointermid, text1.length - pointerend),
+        text2.slice(text2.length - pointermid, text2.length - pointerend)
+        )) {
       pointermin = pointermid;
       pointerend = pointermin;
     } else {
@@ -598,7 +611,7 @@ diff_match_patch.prototype.diff_commonOverlap_ = function(text1, text2) {
   }
   var text_length = Math.min(text1_length, text2_length);
   // Quick check for the worst case.
-  if (text1 == text2) {
+  if (this.isEqualString(text1, text2)) {
     return text_length;
   }
 
@@ -614,8 +627,10 @@ diff_match_patch.prototype.diff_commonOverlap_ = function(text1, text2) {
       return best;
     }
     length += found;
-    if (found == 0 || text1.slice(text_length - length) ==
-        text2.slice(0, length)) {
+    if (found == 0 || this.isEqualString(
+        text1.slice(text_length - length),
+        text2.slice(0, length)
+        )) {
       best = length;
       length++;
     }
@@ -924,7 +939,7 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
       var bestEquality2 = equality2;
       var bestScore = diff_cleanupSemanticScore_(equality1, edit) +
           diff_cleanupSemanticScore_(edit, equality2);
-      while (edit[0] === equality2[0]) {
+      while (this.isEqualChar(edit[0], equality2[0])) {
         equality1 = equality1.concat(edit[0]);
         edit = edit.slice(1).concat(equality2[0]);
         equality2 = equality2.slice(1);
@@ -939,7 +954,7 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
         }
       }
 
-      if (diffs[pointer - 1][1] != bestEquality1) {
+      if (!this.isEqualString(diffs[pointer - 1][1], bestEquality1)) {
         // We have an improvement, save it back to the diff.
         if (bestEquality1) {
           diffs[pointer - 1][1] = bestEquality1;
@@ -1148,8 +1163,8 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
     if (diffs[pointer - 1][0] == DIFF_EQUAL &&
         diffs[pointer + 1][0] == DIFF_EQUAL) {
       // This is a single edit surrounded by equalities.
-      if (diffs[pointer][1].slice(diffs[pointer][1].length -
-          diffs[pointer - 1][1].length) == diffs[pointer - 1][1]) {
+      if (this.isEqualString(diffs[pointer][1].slice(diffs[pointer][1].length -
+          diffs[pointer - 1][1].length), diffs[pointer - 1][1])) {
         // Shift the edit over the previous equality.
         diffs[pointer][1] = diffs[pointer - 1][1].concat(
             diffs[pointer][1].slice(0, diffs[pointer][1].length -
@@ -1158,8 +1173,8 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
         diffs[pointer + 1][1] = diffs[pointer - 1][1].concat(diffs[pointer + 1][1]);
         diffs.splice(pointer - 1, 1);
         changes = true;
-      } else if (diffs[pointer][1].slice(0, diffs[pointer + 1][1].length) ==
-          diffs[pointer + 1][1]) {
+      } else if (this.isEqualString(diffs[pointer][1].slice(0, diffs[pointer + 1][1].length),
+          diffs[pointer + 1][1])) {
         // Shift the edit over the next equality.
         diffs[pointer - 1][1] = diffs[pointer - 1][1].concat(diffs[pointer + 1][1]);
         diffs[pointer][1] =
@@ -1412,13 +1427,13 @@ diff_match_patch.prototype.match_main = function(text, pattern, loc) {
   }
 
   loc = Math.max(0, Math.min(loc, text.length));
-  if (text == pattern) {
+  if (this.isEqualString(text, pattern)) {
     // Shortcut (potentially not guaranteed by the algorithm)
     return 0;
   } else if (!text.length) {
     // Nothing to match.
     return -1;
-  } else if (text.slice(loc, loc + pattern.length) == pattern) {
+  } else if (this.isEqualString(text.slice(loc, loc + pattern.length), pattern)) {
     // Perfect match at the perfect spot!  (Includes case of null pattern)
     return loc;
   } else {
@@ -1837,7 +1852,7 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
       } else {
         text2 = text.slice(start_loc, end_loc + this.Match_MaxBits);
       }
-      if (text1 == text2) {
+      if (this.isEqualString(text1, text2)) {
         // Perfect match, just shove the replacement text in.
         text = text.slice(0, start_loc).concat(
                this.diff_text2(patches[x].diffs)).concat(
@@ -2001,7 +2016,7 @@ diff_match_patch.prototype.patch_splitMax = function(patches) {
             empty = false;
           }
           patch.diffs.push([diff_type, diff_text]);
-          if (diff_text == bigpatch.diffs[0][1]) {
+          if (this.isEqualString(diff_text, bigpatch.diffs[0][1])) {
             bigpatch.diffs.shift();
           } else {
             bigpatch.diffs[0][1] =
