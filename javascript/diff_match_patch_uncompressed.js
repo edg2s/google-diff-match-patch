@@ -78,6 +78,10 @@ diff_match_patch.prototype.isEqualString = function (a, b) {
   return a === b;
 };
 
+diff_match_patch.prototype.emptyString = function () {
+  return '';
+};
+
 /**
  * Find the differences between two texts.  Simplifies the problem by stripping
  * any common prefix or suffix off the texts before diffing.
@@ -245,12 +249,12 @@ diff_match_patch.prototype.diff_lineMode_ = function(text1, text2, deadline) {
 
   // Rediff any replacement blocks, this time character-by-character.
   // Add a dummy entry at the end.
-  diffs.push([DIFF_EQUAL, '']);
+  diffs.push([DIFF_EQUAL, this.emptyString()]);
   var pointer = 0;
   var count_delete = 0;
   var count_insert = 0;
-  var text_delete = '';
-  var text_insert = '';
+  var text_delete = this.emptyString();
+  var text_insert = this.emptyString();
   while (pointer < diffs.length) {
     switch (diffs[pointer][0]) {
       case DIFF_INSERT:
@@ -276,8 +280,8 @@ diff_match_patch.prototype.diff_lineMode_ = function(text1, text2, deadline) {
         }
         count_insert = 0;
         count_delete = 0;
-        text_delete = '';
-        text_insert = '';
+        text_delete = this.emptyString();
+        text_insert = this.emptyString();
         break;
     }
     pointer++;
@@ -452,10 +456,11 @@ diff_match_patch.prototype.diff_bisectSplit_ = function(text1, text2, x, y,
 diff_match_patch.prototype.diff_linesToChars_ = function(text1, text2) {
   var lineArray = [];  // e.g. lineArray[4] == 'Hello\n'
   var lineHash = {};   // e.g. lineHash['Hello\n'] == 4
+  var dmp = this;
 
   // '\x00' is a valid character, but various debuggers don't like it.
   // So we'll insert a junk entry to avoid generating a null character.
-  lineArray[0] = '';
+  lineArray[0] = this.emptyString();
 
   /**
    * Split a text into an array of strings.  Reduce the texts to a string of
@@ -466,7 +471,7 @@ diff_match_patch.prototype.diff_linesToChars_ = function(text1, text2) {
    * @private
    */
   function diff_linesToCharsMunge_(text) {
-    var chars = '';
+    var chars = dmp.emptyString();
     // Walk the text, pulling out a substring for each line.
     // text.split('\n') would would temporarily double our memory footprint.
     // Modifying text would create many large strings to garbage collect.
@@ -677,7 +682,7 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
     // Start with a 1/4 length substring at position i as a seed.
     var seed = longtext.slice(i, i + Math.floor(longtext.length / 4));
     var j = -1;
-    var best_common = '';
+    var best_common = dmp.emptyString();
     var best_longtext_a, best_longtext_b, best_shorttext_a, best_shorttext_b;
     while ((j = shorttext.indexOf(seed, j + 1)) != -1) {
       var prefixLength = dmp.diff_commonPrefix(longtext.slice(i),
@@ -1069,12 +1074,12 @@ diff_match_patch.prototype.diff_cleanupEfficiency = function(diffs) {
  * @param {!Array.<!diff_match_patch.Diff>} diffs Array of diff tuples.
  */
 diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
-  diffs.push([DIFF_EQUAL, '']);  // Add a dummy entry at the end.
+  diffs.push([DIFF_EQUAL, this.emptyString()]);  // Add a dummy entry at the end.
   var pointer = 0;
   var count_delete = 0;
   var count_insert = 0;
-  var text_delete = '';
-  var text_insert = '';
+  var text_delete = this.emptyString();
+  var text_insert = this.emptyString();
   var commonlength;
   while (pointer < diffs.length) {
     switch (diffs[pointer][0]) {
@@ -1144,12 +1149,12 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
         }
         count_insert = 0;
         count_delete = 0;
-        text_delete = '';
-        text_insert = '';
+        text_delete = this.emptyString();
+        text_insert = this.emptyString();
         break;
     }
   }
-  if (diffs[diffs.length - 1][1] === '') {
+  if (this.isEqualChar(diffs[diffs.length - 1][1], '')) {
     diffs.pop();  // Remove the dummy entry at the end.
   }
 
@@ -1905,7 +1910,7 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
  */
 diff_match_patch.prototype.patch_addPadding = function(patches) {
   var paddingLength = this.Patch_Margin;
-  var nullPadding = '';
+  var nullPadding = this.emptyString();
   for (var x = 1; x <= paddingLength; x++) {
     nullPadding = nullPadding.concat(String.fromCharCode(x));
   }
@@ -1973,14 +1978,14 @@ diff_match_patch.prototype.patch_splitMax = function(patches) {
     patches.splice(x--, 1);
     var start1 = bigpatch.start1;
     var start2 = bigpatch.start2;
-    var precontext = '';
+    var precontext = this.emptyString();
     while (bigpatch.diffs.length !== 0) {
       // Create one of several smaller patches.
       var patch = new diff_match_patch.patch_obj();
       var empty = true;
       patch.start1 = start1 - precontext.length;
       patch.start2 = start2 - precontext.length;
-      if (precontext !== '') {
+      if (precontext.length) {
         patch.length1 = patch.length2 = precontext.length;
         patch.diffs.push([DIFF_EQUAL, precontext]);
       }
@@ -2031,7 +2036,7 @@ diff_match_patch.prototype.patch_splitMax = function(patches) {
       // Append the end context for this patch.
       var postcontext = this.diff_text1(bigpatch.diffs)
                             .slice(0, this.Patch_Margin);
-      if (postcontext !== '') {
+      if (postcontext.length) {
         patch.length1 += postcontext.length;
         patch.length2 += postcontext.length;
         if (patch.diffs.length !== 0 &&
