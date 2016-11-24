@@ -335,7 +335,7 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
       }
       var y1 = x1 - k1;
       while (x1 < text1_length && y1 < text2_length &&
-             text1.charAt(x1) == text2.charAt(y1)) {
+             text1[x1] == text2[y1]) {
         x1++;
         y1++;
       }
@@ -370,8 +370,8 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
       }
       var y2 = x2 - k2;
       while (x2 < text1_length && y2 < text2_length &&
-             text1.charAt(text1_length - x2 - 1) ==
-             text2.charAt(text2_length - y2 - 1)) {
+             text1[text1_length - x2 - 1] ==
+             text2[text2_length - y2 - 1]) {
         x2++;
         y2++;
       }
@@ -503,7 +503,7 @@ diff_match_patch.prototype.diff_charsToLines_ = function(diffs, lineArray) {
     var chars = diffs[x][1];
     var text = [];
     for (var y = 0; y < chars.length; y++) {
-      text[y] = lineArray[chars.charCodeAt(y)];
+      text[y] = lineArray[chars[y].charCodeAt(0)];
     }
     diffs[x][1] = text.join('');
   }
@@ -519,7 +519,7 @@ diff_match_patch.prototype.diff_charsToLines_ = function(diffs, lineArray) {
  */
 diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
   // Quick check for common null cases.
-  if (!text1 || !text2 || text1.charAt(0) != text2.charAt(0)) {
+  if (!text1 || !text2 || text1[0] != text2[0]) {
     return 0;
   }
   // Binary search.
@@ -551,7 +551,7 @@ diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
 diff_match_patch.prototype.diff_commonSuffix = function(text1, text2) {
   // Quick check for common null cases.
   if (!text1 || !text2 ||
-      text1.charAt(text1.length - 1) != text2.charAt(text2.length - 1)) {
+      text1[text1.length - 1] != text2[text2.length - 1]) {
     return 0;
   }
   // Binary search.
@@ -863,8 +863,8 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
     // 'whitespace'.  Since this function's purpose is largely cosmetic,
     // the choice has been made to use each language's native features
     // rather than force total conformity.
-    var char1 = one.charAt(one.length - 1);
-    var char2 = two.charAt(0);
+    var char1 = one[one.length - 1];
+    var char2 = two[0];
     var nonAlphaNumeric1 = char1.match(diff_match_patch.nonAlphaNumericRegex_);
     var nonAlphaNumeric2 = char2.match(diff_match_patch.nonAlphaNumericRegex_);
     var whitespace1 = nonAlphaNumeric1 &&
@@ -924,9 +924,9 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
       var bestEquality2 = equality2;
       var bestScore = diff_cleanupSemanticScore_(equality1, edit) +
           diff_cleanupSemanticScore_(edit, equality2);
-      while (edit.charAt(0) === equality2.charAt(0)) {
-        equality1 += edit.charAt(0);
-        edit = edit.slice(1) + equality2.charAt(0);
+      while (edit[0] === equality2[0]) {
+        equality1 += edit[0];
+        edit = edit.slice(1) + equality2[0];
         equality2 = equality2.slice(1);
         var score = diff_cleanupSemanticScore_(equality1, edit) +
             diff_cleanupSemanticScore_(edit, equality2);
@@ -1352,7 +1352,7 @@ diff_match_patch.prototype.diff_fromDelta = function(text1, delta) {
     // Each token begins with a one character parameter which specifies the
     // operation of this token (delete, insert, equality).
     var param = tokens[x].slice(1);
-    switch (tokens[x].charAt(0)) {
+    switch (tokens[x][0]) {
       case '+':
         try {
           diffs[diffsLength++] = [DIFF_INSERT, decodeURI(param)];
@@ -1369,7 +1369,7 @@ diff_match_patch.prototype.diff_fromDelta = function(text1, delta) {
           throw new Error('Invalid number in diff_fromDelta: ' + param);
         }
         var text = text1.slice(pointer, pointer += n);
-        if (tokens[x].charAt(0) == '=') {
+        if (tokens[x][0] == '=') {
           diffs[diffsLength++] = [DIFF_EQUAL, text];
         } else {
           diffs[diffsLength++] = [DIFF_DELETE, text];
@@ -1507,7 +1507,7 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
     for (var j = finish; j >= start; j--) {
       // The alphabet (s) is a sparse hash, so the following line generates
       // warnings.
-      var charMatch = s[text.charAt(j - 1)];
+      var charMatch = s[text[j - 1]] || '';
       if (d === 0) {  // First pass: exact match.
         rd[j] = ((rd[j + 1] << 1) | 1) & charMatch;
       } else {  // Subsequent passes: fuzzy match.
@@ -1552,10 +1552,10 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
 diff_match_patch.prototype.match_alphabet_ = function(pattern) {
   var s = {};
   for (var i = 0; i < pattern.length; i++) {
-    s[pattern.charAt(i)] = 0;
+    s[pattern[i]] = 0;
   }
   for (var i = 0; i < pattern.length; i++) {
-    s[pattern.charAt(i)] |= 1 << (pattern.length - i - 1);
+    s[pattern[i]] |= 1 << (pattern.length - i - 1);
   }
   return s;
 };
@@ -2090,7 +2090,7 @@ diff_match_patch.prototype.patch_fromText = function(textline) {
     textPointer++;
 
     while (textPointer < text.length) {
-      var sign = text[textPointer].charAt(0);
+      var sign = text[textPointer][0];
       try {
         var line = decodeURI(text[textPointer].slice(1));
       } catch (ex) {
@@ -2109,7 +2109,7 @@ diff_match_patch.prototype.patch_fromText = function(textline) {
       } else if (sign == '@') {
         // Start of next patch.
         break;
-      } else if (sign === '') {
+      } else if (sign === undefined) {
         // Blank line?  Whatever.
       } else {
         // WTF?
