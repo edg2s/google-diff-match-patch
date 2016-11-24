@@ -248,11 +248,11 @@ diff_match_patch.prototype.diff_lineMode_ = function(text1, text2, deadline) {
     switch (diffs[pointer][0]) {
       case DIFF_INSERT:
         count_insert++;
-        text_insert += diffs[pointer][1];
+        text_insert = text_insert.concat(diffs[pointer][1]);
         break;
       case DIFF_DELETE:
         count_delete++;
-        text_delete += diffs[pointer][1];
+        text_delete = text_delete.concat(diffs[pointer][1]);
         break;
       case DIFF_EQUAL:
         // Upon reaching an equality, check for prior redundancies.
@@ -475,9 +475,9 @@ diff_match_patch.prototype.diff_linesToChars_ = function(text1, text2) {
 
       if (lineHash.hasOwnProperty ? lineHash.hasOwnProperty(line) :
           (lineHash[line] !== undefined)) {
-        chars += String.fromCharCode(lineHash[line]);
+        chars = chars.concat(String.fromCharCode(lineHash[line]));
       } else {
-        chars += String.fromCharCode(lineArrayLength);
+        chars = chars.concat(String.fromCharCode(lineArrayLength));
         lineHash[line] = lineArrayLength;
         lineArray[lineArrayLength++] = line;
       }
@@ -670,8 +670,8 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
       var suffixLength = dmp.diff_commonSuffix(longtext.slice(0, i),
                                                shorttext.slice(0, j));
       if (best_common.length < suffixLength + prefixLength) {
-        best_common = shorttext.slice(j - suffixLength, j) +
-            shorttext.slice(j, j + prefixLength);
+        best_common = shorttext.slice(j - suffixLength, j).concat(
+            shorttext.slice(j, j + prefixLength));
         best_longtext_a = longtext.slice(0, i - suffixLength);
         best_longtext_b = longtext.slice(i + prefixLength);
         best_shorttext_a = shorttext.slice(0, j - suffixLength);
@@ -914,8 +914,8 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
       if (commonOffset) {
         var commonString = edit.slice(edit.length - commonOffset);
         equality1 = equality1.slice(0, equality1.length - commonOffset);
-        edit = commonString + edit.slice(0, edit.length - commonOffset);
-        equality2 = commonString + equality2;
+        edit = commonString.concat(edit.slice(0, edit.length - commonOffset));
+        equality2 = commonString.concat(equality2);
       }
 
       // Second, step character by character right, looking for the best fit.
@@ -925,8 +925,8 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
       var bestScore = diff_cleanupSemanticScore_(equality1, edit) +
           diff_cleanupSemanticScore_(edit, equality2);
       while (edit[0] === equality2[0]) {
-        equality1 += edit[0];
-        edit = edit.slice(1) + equality2[0];
+        equality1 = equality1.concat(edit[0]);
+        edit = edit.slice(1).concat(equality2[0]);
         equality2 = equality2.slice(1);
         var score = diff_cleanupSemanticScore_(equality1, edit) +
             diff_cleanupSemanticScore_(edit, equality2);
@@ -1065,12 +1065,12 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
     switch (diffs[pointer][0]) {
       case DIFF_INSERT:
         count_insert++;
-        text_insert += diffs[pointer][1];
+        text_insert = text_insert.concat(diffs[pointer][1]);
         pointer++;
         break;
       case DIFF_DELETE:
         count_delete++;
-        text_delete += diffs[pointer][1];
+        text_delete = text_delete.concat(diffs[pointer][1]);
         pointer++;
         break;
       case DIFF_EQUAL:
@@ -1083,8 +1083,10 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
               if ((pointer - count_delete - count_insert) > 0 &&
                   diffs[pointer - count_delete - count_insert - 1][0] ==
                   DIFF_EQUAL) {
-                diffs[pointer - count_delete - count_insert - 1][1] +=
-                    text_insert.slice(0, commonlength);
+                diffs[pointer - count_delete - count_insert - 1][1] =
+                    diffs[pointer - count_delete - count_insert - 1][1].concat(
+                      text_insert.slice(0, commonlength)
+                    );
               } else {
                 diffs.splice(0, 0, [DIFF_EQUAL,
                                     text_insert.slice(0, commonlength)]);
@@ -1097,7 +1099,7 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
             commonlength = this.diff_commonSuffix(text_insert, text_delete);
             if (commonlength !== 0) {
               diffs[pointer][1] = text_insert.slice(text_insert.length -
-                  commonlength) + diffs[pointer][1];
+                  commonlength).concat(diffs[pointer][1]);
               text_insert = text_insert.slice(0, text_insert.length -
                   commonlength);
               text_delete = text_delete.slice(0, text_delete.length -
@@ -1120,7 +1122,7 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
                     (count_delete ? 1 : 0) + (count_insert ? 1 : 0) + 1;
         } else if (pointer !== 0 && diffs[pointer - 1][0] == DIFF_EQUAL) {
           // Merge this equality with the previous one.
-          diffs[pointer - 1][1] += diffs[pointer][1];
+          diffs[pointer - 1][1] = diffs[pointer - 1][1].concat(diffs[pointer][1]);
           diffs.splice(pointer, 1);
         } else {
           pointer++;
@@ -1149,19 +1151,20 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
       if (diffs[pointer][1].slice(diffs[pointer][1].length -
           diffs[pointer - 1][1].length) == diffs[pointer - 1][1]) {
         // Shift the edit over the previous equality.
-        diffs[pointer][1] = diffs[pointer - 1][1] +
+        diffs[pointer][1] = diffs[pointer - 1][1].concat(
             diffs[pointer][1].slice(0, diffs[pointer][1].length -
-                                        diffs[pointer - 1][1].length);
-        diffs[pointer + 1][1] = diffs[pointer - 1][1] + diffs[pointer + 1][1];
+                                        diffs[pointer - 1][1].length)
+        );
+        diffs[pointer + 1][1] = diffs[pointer - 1][1].concat(diffs[pointer + 1][1]);
         diffs.splice(pointer - 1, 1);
         changes = true;
       } else if (diffs[pointer][1].slice(0, diffs[pointer + 1][1].length) ==
           diffs[pointer + 1][1]) {
         // Shift the edit over the next equality.
-        diffs[pointer - 1][1] += diffs[pointer + 1][1];
+        diffs[pointer - 1][1] = diffs[pointer - 1][1].concat(diffs[pointer + 1][1]);
         diffs[pointer][1] =
-            diffs[pointer][1].slice(diffs[pointer + 1][1].length) +
-            diffs[pointer + 1][1];
+            diffs[pointer][1].slice(diffs[pointer + 1][1].length).concat(
+            diffs[pointer + 1][1]);
         diffs.splice(pointer + 1, 1);
         changes = true;
       }
@@ -1693,15 +1696,15 @@ diff_match_patch.prototype.patch_make = function(a, opt_b, opt_c) {
       case DIFF_INSERT:
         patch.diffs[patchDiffLength++] = diffs[x];
         patch.length2 += diff_text.length;
-        postpatch_text = postpatch_text.slice(0, char_count2) + diff_text +
-                         postpatch_text.slice(char_count2);
+        postpatch_text = postpatch_text.slice(0, char_count2).concat(diff_text).concat(
+                         postpatch_text.slice(char_count2));
         break;
       case DIFF_DELETE:
         patch.length1 += diff_text.length;
         patch.diffs[patchDiffLength++] = diffs[x];
-        postpatch_text = postpatch_text.slice(0, char_count2) +
+        postpatch_text = postpatch_text.slice(0, char_count2).concat(
                          postpatch_text.slice(char_count2 +
-                             diff_text.length);
+                             diff_text.length));
         break;
       case DIFF_EQUAL:
         if (diff_text.length <= 2 * this.Patch_Margin &&
@@ -1788,7 +1791,7 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
   patches = this.patch_deepCopy(patches);
 
   var nullPadding = this.patch_addPadding(patches);
-  text = nullPadding + text + nullPadding;
+  text = nullPadding.concat(text).concat(nullPadding);
 
   this.patch_splitMax(patches);
   // delta keeps track of the offset between the expected and actual location
@@ -1836,9 +1839,9 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
       }
       if (text1 == text2) {
         // Perfect match, just shove the replacement text in.
-        text = text.slice(0, start_loc) +
-               this.diff_text2(patches[x].diffs) +
-               text.slice(start_loc + text1.length);
+        text = text.slice(0, start_loc).concat(
+               this.diff_text2(patches[x].diffs)).concat(
+               text.slice(start_loc + text1.length));
       } else {
         // Imperfect match.  Run a diff to get a framework of equivalent
         // indices.
@@ -1858,12 +1861,12 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
               index2 = this.diff_xIndex(diffs, index1);
             }
             if (mod[0] === DIFF_INSERT) {  // Insertion
-              text = text.slice(0, start_loc + index2) + mod[1] +
-                     text.slice(start_loc + index2);
+              text = text.slice(0, start_loc + index2).concat(mod[1]).concat(
+                     text.slice(start_loc + index2));
             } else if (mod[0] === DIFF_DELETE) {  // Deletion
-              text = text.slice(0, start_loc + index2) +
+              text = text.slice(0, start_loc + index2).concat(
                      text.slice(start_loc + this.diff_xIndex(diffs,
-                         index1 + mod[1].length));
+                         index1 + mod[1].length)));
             }
             if (mod[0] !== DIFF_DELETE) {
               index1 += mod[1].length;
@@ -1889,7 +1892,7 @@ diff_match_patch.prototype.patch_addPadding = function(patches) {
   var paddingLength = this.Patch_Margin;
   var nullPadding = '';
   for (var x = 1; x <= paddingLength; x++) {
-    nullPadding += String.fromCharCode(x);
+    nullPadding = nullPadding.concat(String.fromCharCode(x));
   }
 
   // Bump all the patches forward.
@@ -1911,7 +1914,7 @@ diff_match_patch.prototype.patch_addPadding = function(patches) {
   } else if (paddingLength > diffs[0][1].length) {
     // Grow first equality.
     var extraLength = paddingLength - diffs[0][1].length;
-    diffs[0][1] = nullPadding.slice(diffs[0][1].length) + diffs[0][1];
+    diffs[0][1] = nullPadding.slice(diffs[0][1].length).concat(diffs[0][1]);
     patch.start1 -= extraLength;
     patch.start2 -= extraLength;
     patch.length1 += extraLength;
@@ -1929,7 +1932,7 @@ diff_match_patch.prototype.patch_addPadding = function(patches) {
   } else if (paddingLength > diffs[diffs.length - 1][1].length) {
     // Grow last equality.
     var extraLength = paddingLength - diffs[diffs.length - 1][1].length;
-    diffs[diffs.length - 1][1] += nullPadding.slice(0, extraLength);
+    diffs[diffs.length - 1][1] = diffs[diffs.length - 1][1].concat(nullPadding.slice(0, extraLength));
     patch.length1 += extraLength;
     patch.length2 += extraLength;
   }
@@ -2018,7 +2021,7 @@ diff_match_patch.prototype.patch_splitMax = function(patches) {
         patch.length2 += postcontext.length;
         if (patch.diffs.length !== 0 &&
             patch.diffs[patch.diffs.length - 1][0] === DIFF_EQUAL) {
-          patch.diffs[patch.diffs.length - 1][1] += postcontext;
+          patch.diffs[patch.diffs.length - 1][1] = patch.diffs[patch.diffs.length - 1][1].concat(postcontext);
         } else {
           patch.diffs.push([DIFF_EQUAL, postcontext]);
         }
