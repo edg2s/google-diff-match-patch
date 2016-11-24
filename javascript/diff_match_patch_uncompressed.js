@@ -78,6 +78,10 @@ diff_match_patch.prototype.isEqualString = function (a, b) {
   return a === b;
 };
 
+diff_match_patch.prototype.charsToString = function (chars) {
+  return chars.join('');
+};
+
 diff_match_patch.prototype.emptyString = function () {
   return '';
 };
@@ -519,7 +523,8 @@ diff_match_patch.prototype.diff_charsToLines_ = function(diffs, lineArray) {
     for (var y = 0; y < chars.length; y++) {
       text[y] = lineArray[chars[y].charCodeAt(0)];
     }
-    diffs[x][1] = text.join('');
+    var empty = this.emptyString();
+    diffs[x][1] = empty.concat.apply(empty, text);
   }
 };
 
@@ -1262,7 +1267,7 @@ diff_match_patch.prototype.diff_prettyHtml = function(diffs) {
         break;
     }
   }
-  return html.join('');
+  return this.charsToString(html);
 };
 
 
@@ -1278,7 +1283,7 @@ diff_match_patch.prototype.diff_text1 = function(diffs) {
       text[x] = diffs[x][1];
     }
   }
-  return text.join('');
+  return this.charsToString(text);
 };
 
 
@@ -1294,7 +1299,7 @@ diff_match_patch.prototype.diff_text2 = function(diffs) {
       text[x] = diffs[x][1];
     }
   }
-  return text.join('');
+  return this.charsToString(text);
 };
 
 
@@ -2064,7 +2069,7 @@ diff_match_patch.prototype.patch_toText = function(patches) {
   for (var x = 0; x < patches.length; x++) {
     text[x] = patches[x];
   }
-  return text.join('');
+  return this.charsToString(text);
 };
 
 
