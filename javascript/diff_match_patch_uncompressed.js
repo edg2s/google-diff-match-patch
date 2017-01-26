@@ -24,6 +24,20 @@
  */
 
 /**
+ * Forked to abstract string handling methods so diff can be run against
+ * different data structures, e.g. strings stored as arrays.
+ *
+ * The following methods have been added:
+ * - isEqualChar
+ * - isEqualString
+ * - charsToString
+ * - getEmptyString
+ *
+ * @author Ed Sanders
+ * https://github.com/edg2s/google-diff-match-patch
+ */
+
+/**
  * Class containing the diff, match and patch methods.
  * @constructor
  */
