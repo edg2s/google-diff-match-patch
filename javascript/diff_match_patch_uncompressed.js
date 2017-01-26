@@ -324,7 +324,8 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
   // Cache the text lengths to prevent multiple calls.
   var text1_length = text1.length;
   var text2_length = text2.length;
-  var max_d = Math.ceil((text1_length + text2_length) / 2);
+  // Bitwise version of Math.ceil(x+y/2)
+  var max_d = (text1_length + text2_length + 1) >> 1;
   var v_offset = max_d;
   var v_length = 2 * max_d;
   var v1 = new Array(v_length);
@@ -340,7 +341,7 @@ diff_match_patch.prototype.diff_bisect_ = function(text1, text2, deadline) {
   var delta = text1_length - text2_length;
   // If the total number of characters is odd, then the front path will collide
   // with the reverse path.
-  var front = (delta % 2 != 0);
+  var front = delta & 1;
   // Offsets for start and end of k loop.
   // Prevents mapping of space beyond the grid.
   var k1start = 0;
@@ -571,7 +572,8 @@ diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
     } else {
       pointermax = pointermid;
     }
-    pointermid = Math.floor((pointermax - pointermin) / 2 + pointermin);
+    // Bitwise version of Math.floor((a+b)/2)
+    pointermid = (pointermin + pointermax) >> 1;
   }
   return pointermid;
 };
@@ -605,7 +607,8 @@ diff_match_patch.prototype.diff_commonSuffix = function(text1, text2) {
     } else {
       pointermax = pointermid;
     }
-    pointermid = Math.floor((pointermax - pointermin) / 2 + pointermin);
+    // Bitwise version of Math.floor((a+b)/2)
+    pointermid = (pointermin + pointermax) >> 1;
   }
   return pointermid;
 };
@@ -699,7 +702,8 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
    */
   function diff_halfMatchI_(longtext, shorttext, i) {
     // Start with a 1/4 length substring at position i as a seed.
-    var seed = longtext.slice(i, i + Math.floor(longtext.length / 4));
+    // Bitwise version of Math.floor(x/4)
+    var seed = longtext.slice(i, i + (longtext.length >> 2));
     var j = -1;
     var best_common = dmp.getEmptyString();
     var best_longtext_a, best_longtext_b, best_shorttext_a, best_shorttext_b;
@@ -726,11 +730,11 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
   }
 
   // First check if the second quarter is the seed for a half-match.
-  var hm1 = diff_halfMatchI_(longtext, shorttext,
-                             Math.ceil(longtext.length / 4));
+  // Bitwise version of Math.ceil(x / 4)
+  var hm1 = diff_halfMatchI_(longtext, shorttext, longtext.length + 3 >> 2);
   // Check again based on the third quarter.
-  var hm2 = diff_halfMatchI_(longtext, shorttext,
-                             Math.ceil(longtext.length / 2));
+  // Bitwise version of Math.ceil(x / 2)
+  var hm2 = diff_halfMatchI_(longtext, shorttext, longtext.length + 1 >> 2);
   var hm;
   if (!hm1 && !hm2) {
     return null;
@@ -1537,7 +1541,8 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
       } else {
         bin_max = bin_mid;
       }
-      bin_mid = Math.floor((bin_max - bin_min) / 2 + bin_min);
+      // Bitwise version of Math.floor((a+b)/2)
+      bin_mid = (bin_min + bin_max) >> 1;
     }
     // Use the result from this iteration as the maximum for the next.
     bin_max = bin_mid;
