@@ -105,16 +105,22 @@ diff_match_patch.prototype.getEmptyString = function () {
  * any common prefix or suffix off the texts before diffing.
  * @param {string} text1 Old string to be diffed.
  * @param {string} text2 New string to be diffed.
- * @param {boolean=} opt_checklines Optional speedup flag. If present and false,
+ * @param {Object} options Optional parameters
+ *  - {boolean} checklines Optional speedup flag. If present and false,
  *     then don't run a line-level diff first to identify the changed areas.
  *     Defaults to true, which does a faster, slightly less optimal diff.
- * @param {number} opt_deadline Optional time when the diff should be complete
+ *  - {number} deadline Optional time when the diff should be complete
  *     by.  Used internally for recursive calls.  Users should set DiffTimeout
  *     instead.
+ *  - {boolean} keepOldText Where the text1 and text2 are "equal", keep text1.
+ *    Since it is possible to override isEqualString, the text may be "equal"
+ *    but not exactly the same.
  * @return {!Array.<!diff_match_patch.Diff>} Array of diff tuples.
  */
-diff_match_patch.prototype.diff_main = function(text1, text2, opt_checklines,
-    opt_deadline) {
+diff_match_patch.prototype.diff_main = function(text1, text2, options) {
+  var opt_checklines = options.checklines,
+    opt_deadline = options.deadline,
+    keepText = options.keepOldText ? text1 : text2;
   // Set a deadline by which time the diff must be complete.
   if (typeof opt_deadline === 'undefined') {
     if (this.Diff_Timeout <= 0) {
@@ -132,8 +138,8 @@ diff_match_patch.prototype.diff_main = function(text1, text2, opt_checklines,
 
   // Check for equality (speedup).
   if (this.isEqualString(text1, text2)) {
-    if (text1) {
-      return [[DIFF_EQUAL, text1]];
+    if (keepText) {
+      return [[DIFF_EQUAL, keepText]];
     }
     return [];
   }
@@ -145,13 +151,13 @@ diff_match_patch.prototype.diff_main = function(text1, text2, opt_checklines,
 
   // Trim off common prefix (speedup).
   var commonlength = this.diff_commonPrefix(text1, text2);
-  var commonprefix = text1.slice(0, commonlength);
+  var commonprefix = keepText.slice(0, commonlength);
   text1 = text1.slice(commonlength);
   text2 = text2.slice(commonlength);
 
   // Trim off common suffix (speedup).
   commonlength = this.diff_commonSuffix(text1, text2);
-  var commonsuffix = text1.slice(text1.length - commonlength);
+  var commonsuffix = keepText.slice(keepText.length - commonlength);
   text1 = text1.slice(0, text1.length - commonlength);
   text2 = text2.slice(0, text2.length - commonlength);
 
