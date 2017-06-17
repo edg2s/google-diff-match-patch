@@ -118,9 +118,17 @@ diff_match_patch.prototype.getEmptyString = function () {
  * @return {!Array.<!diff_match_patch.Diff>} Array of diff tuples.
  */
 diff_match_patch.prototype.diff_main = function(text1, text2, options) {
-  var opt_checklines = options && options.checklines,
-    opt_deadline = options && options.deadline,
-    keepText = options && options.keepOldText ? text1 : text2;
+  var opt_checklines, opt_deadline;
+  if ( typeof options === 'object' ) {
+    opt_checklines = options.checklines,
+    opt_deadline = options.deadline,
+    keepText = options.keepOldText ? text1 : text2;
+  } else {
+    // Backwards compatiblity with old function signature: (text1, text, opt_checklines, opt_deadline)
+    opt_checklines = arguments[2];
+    opt_deadline = arguments[3];
+    keepText = text2;
+  }
   // Set a deadline by which time the diff must be complete.
   if (typeof opt_deadline === 'undefined') {
     if (this.Diff_Timeout <= 0) {
