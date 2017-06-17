@@ -118,9 +118,9 @@ diff_match_patch.prototype.getEmptyString = function () {
  * @return {!Array.<!diff_match_patch.Diff>} Array of diff tuples.
  */
 diff_match_patch.prototype.diff_main = function(text1, text2, options) {
-  var opt_checklines = options.checklines,
-    opt_deadline = options.deadline,
-    keepText = options.keepOldText ? text1 : text2;
+  var opt_checklines = options && options.checklines,
+    opt_deadline = options && options.deadline,
+    keepText = options && options.keepOldText ? text1 : text2;
   // Set a deadline by which time the diff must be complete.
   if (typeof opt_deadline === 'undefined') {
     if (this.Diff_Timeout <= 0) {
@@ -233,8 +233,8 @@ diff_match_patch.prototype.diff_compute_ = function(text1, text2, checklines,
     var text2_b = hm[3];
     var mid_common = hm[4];
     // Send both pairs off for separate processing.
-    var diffs_a = this.diff_main(text1_a, text2_a, checklines, deadline);
-    var diffs_b = this.diff_main(text1_b, text2_b, checklines, deadline);
+    var diffs_a = this.diff_main(text1_a, text2_a, {checklines: checklines, deadline: deadline});
+    var diffs_b = this.diff_main(text1_b, text2_b, {checklines: checklines, deadline: deadline});
     // Merge the results.
     return diffs_a.concat([[DIFF_EQUAL, mid_common]], diffs_b);
   }
@@ -264,7 +264,7 @@ diff_match_patch.prototype.diff_lineMode_ = function(text1, text2, deadline) {
   text2 = a.chars2;
   var linearray = a.lineArray;
 
-  var diffs = this.diff_main(text1, text2, false, deadline);
+  var diffs = this.diff_main(text1, text2, {checklines: false, deadline: deadline});
 
   // Convert the diff back to original text.
   this.diff_charsToLines_(diffs, linearray);
@@ -296,7 +296,7 @@ diff_match_patch.prototype.diff_lineMode_ = function(text1, text2, deadline) {
           diffs.splice(pointer - count_delete - count_insert,
                        count_delete + count_insert);
           pointer = pointer - count_delete - count_insert;
-          var a = this.diff_main(text_delete, text_insert, false, deadline);
+          var a = this.diff_main(text_delete, text_insert, {checklines: false, deadline: deadline});
           for (var j = a.length - 1; j >= 0; j--) {
             diffs.splice(pointer, 0, a[j]);
           }
@@ -460,8 +460,8 @@ diff_match_patch.prototype.diff_bisectSplit_ = function(text1, text2, x, y,
   var text2b = text2.slice(y);
 
   // Compute both diffs serially.
-  var diffs = this.diff_main(text1a, text2a, false, deadline);
-  var diffsb = this.diff_main(text1b, text2b, false, deadline);
+  var diffs = this.diff_main(text1a, text2a, {checklines: false, deadline: deadline});
+  var diffsb = this.diff_main(text1b, text2b, {checklines: false, deadline: deadline});
 
   return diffs.concat(diffsb);
 };
@@ -1692,7 +1692,7 @@ diff_match_patch.prototype.patch_make = function(a, opt_b, opt_c) {
     // Method 1: text1, text2
     // Compute diffs from text1 and text2.
     text1 = /** @type {string} */(a);
-    diffs = this.diff_main(text1, /** @type {string} */(opt_b), true);
+    diffs = this.diff_main(text1, /** @type {string} */(opt_b), {checklines: true});
     if (diffs.length > 2) {
       this.diff_cleanupSemantic(diffs);
       this.diff_cleanupEfficiency(diffs);
@@ -1894,7 +1894,7 @@ diff_match_patch.prototype.patch_apply = function(patches, text) {
       } else {
         // Imperfect match.  Run a diff to get a framework of equivalent
         // indices.
-        var diffs = this.diff_main(text1, text2, false);
+        var diffs = this.diff_main(text1, text2, {checklines: false});
         if (text1.length > this.Match_MaxBits &&
             this.diff_levenshtein(diffs) / text1.length >
             this.Patch_DeleteThreshold) {
