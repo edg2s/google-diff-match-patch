@@ -739,7 +739,7 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
   var hm1 = diff_halfMatchI_(longtext, shorttext, longtext.length + 3 >> 2);
   // Check again based on the third quarter.
   // Bitwise version of Math.ceil(x / 2)
-  var hm2 = diff_halfMatchI_(longtext, shorttext, longtext.length + 1 >> 2);
+  var hm2 = diff_halfMatchI_(longtext, shorttext, longtext.length + 1 >> 1);
   var hm;
   if (!hm1 && !hm2) {
     return null;
