@@ -177,10 +177,10 @@ diff_match_patch.prototype.diff_main = function(text1, text2, options) {
   var diffs = this.diff_compute_(text1, text2, checklines, deadline);
 
   // Restore the prefix and suffix.
-  if (commonprefix) {
+  if (commonprefix.length) {
     diffs.unshift([DIFF_EQUAL, commonprefix]);
   }
-  if (commonsuffix) {
+  if (commonsuffix.length) {
     diffs.push([DIFF_EQUAL, commonsuffix]);
   }
   this.diff_cleanupMerge(diffs);
@@ -204,12 +204,12 @@ diff_match_patch.prototype.diff_compute_ = function(text1, text2, checklines,
     deadline) {
   var diffs;
 
-  if (!text1) {
+  if (!text1.length) {
     // Just add some text (speedup).
     return [[DIFF_INSERT, text2]];
   }
 
-  if (!text2) {
+  if (!text2.length) {
     // Just delete some text (speedup).
     return [[DIFF_DELETE, text1]];
   }
@@ -1196,7 +1196,7 @@ diff_match_patch.prototype.diff_cleanupMerge = function(diffs) {
         break;
     }
   }
-  if (this.isEqualChar(diffs[diffs.length - 1][1], '')) {
+  if (!diffs[diffs.length - 1][1].length) {
     diffs.pop();  // Remove the dummy entry at the end.
   }
 
