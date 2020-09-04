@@ -32,6 +32,8 @@
  * - isEqualString
  * - charsToString
  * - getEmptyString
+ * - indexOf
+ * - lastIndexOf
  *
  * The following properties have been added:
  * - lastDiffTimedOut
@@ -101,6 +103,14 @@ diff_match_patch.prototype.charsToString = function (chars) {
 
 diff_match_patch.prototype.getEmptyString = function () {
   return '';
+};
+
+diff_match_patch.prototype.indexOf = function (text, searchValue, fromIndex) {
+  return text.indexOf(searchValue, fromIndex);
+};
+
+diff_match_patch.prototype.lastIndexOf = function (text, searchValue, fromIndex) {
+  return text.lastIndexOf(searchValue, fromIndex);
 };
 
 /**
@@ -216,7 +226,7 @@ diff_match_patch.prototype.diff_compute_ = function(text1, text2, checklines,
 
   var longtext = text1.length > text2.length ? text1 : text2;
   var shorttext = text1.length > text2.length ? text2 : text1;
-  var i = longtext.indexOf(shorttext);
+  var i = this.indexOf(longtext, shorttext);
   if (i !== -1) {
     // Shorter text is inside the longer text (speedup).
     diffs = [[DIFF_INSERT, longtext.slice(0, i)],
@@ -519,7 +529,7 @@ diff_match_patch.prototype.diff_linesToChars_ = function(text1, text2) {
     // Keeping our own length variable is faster than looking it up.
     var lineArrayLength = lineArray.length;
     while (lineEnd < text.length - 1) {
-      lineEnd = text.indexOf('\n', lineStart);
+      lineEnd = dmp.indexOf(text, '\n', lineStart);
       if (lineEnd === -1) {
         lineEnd = text.length - 1;
       }
@@ -668,7 +678,7 @@ diff_match_patch.prototype.diff_commonOverlap_ = function(text1, text2) {
   var length = 1;
   while (true) {
     var pattern = text1.slice(text_length - length);
-    var found = text2.indexOf(pattern);
+    var found = this.indexOf(text2, pattern);
     if (found === -1) {
       return best;
     }
@@ -726,7 +736,7 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
     var j = -1;
     var best_common = dmp.getEmptyString();
     var best_longtext_a, best_longtext_b, best_shorttext_a, best_shorttext_b;
-    while ((j = shorttext.indexOf(seed, j + 1)) !== -1) {
+    while ((j = dmp.indexOf(shorttext, seed, j + 1)) !== -1) {
       var prefixLength = dmp.diff_commonPrefix(longtext.slice(i),
                                                shorttext.slice(j));
       var suffixLength = dmp.diff_commonSuffix(longtext.slice(0, i),
@@ -1530,11 +1540,11 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
   // Highest score beyond which we give up.
   var score_threshold = this.Match_Threshold;
   // Is there a nearby exact match? (speedup)
-  var best_loc = text.indexOf(pattern, loc);
+  var best_loc = dmp.indexOf(text, pattern, loc);
   if (best_loc !== -1) {
     score_threshold = Math.min(match_bitapScore_(0, best_loc), score_threshold);
     // What about in the other direction? (speedup)
-    best_loc = text.lastIndexOf(pattern, loc + pattern.length);
+    best_loc = this.lastIndexOf(text, pattern, loc + pattern.length);
     if (best_loc !== -1) {
       score_threshold =
           Math.min(match_bitapScore_(0, best_loc), score_threshold);
@@ -1646,7 +1656,7 @@ diff_match_patch.prototype.patch_addContext_ = function(patch, text) {
 
   // Look for the first and last matches of pattern in text.  If two different
   // matches are found, increase the pattern length.
-  while (text.indexOf(pattern) !== text.lastIndexOf(pattern) &&
+  while (this.indexOf(text, pattern) !== this.lastIndexOf(text, pattern) &&
          pattern.length < this.Match_MaxBits - this.Patch_Margin -
          this.Patch_Margin) {
     padding += this.Patch_Margin;
