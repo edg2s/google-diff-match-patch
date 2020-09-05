@@ -160,7 +160,7 @@ diff_match_patch.prototype.diff_main = function(text1, text2, options) {
 
   // Check for equality (speedup).
   if (this.isEqualString(text1, text2)) {
-    if (keepText) {
+    if (keepText.length) {
       return [[DIFF_EQUAL, keepText]];
     }
     return [];
@@ -582,7 +582,7 @@ diff_match_patch.prototype.diff_charsToLines_ = function(diffs, lineArray) {
  */
 diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
   // Quick check for common null cases.
-  if (!text1 || !text2 || !this.isEqualChar(text1[0], text2[0])) {
+  if (!text1.length || !text2.length || !this.isEqualChar(text1[0], text2[0])) {
     return 0;
   }
   // Binary search.
@@ -616,7 +616,7 @@ diff_match_patch.prototype.diff_commonPrefix = function(text1, text2) {
  */
 diff_match_patch.prototype.diff_commonSuffix = function(text1, text2) {
   // Quick check for common null cases.
-  if (!text1 || !text2 ||
+  if (!text1.length || !text2.length ||
       !this.isEqualChar(text1[text1.length - 1], text2[text2.length - 1])) {
     return 0;
   }
@@ -828,7 +828,7 @@ diff_match_patch.prototype.diff_cleanupSemantic = function(diffs) {
       }
       // Eliminate an equality that is smaller or equal to the edits on both
       // sides of it.
-      if (lastequality && (lastequality.length <=
+      if (lastequality && lastequality.length && (lastequality.length <=
           Math.max(length_insertions1, length_deletions1)) &&
           (lastequality.length <= Math.max(length_insertions2,
                                            length_deletions2))) {
@@ -925,7 +925,7 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
    * @private
    */
   function diff_cleanupSemanticScore_(one, two) {
-    if (!one || !two) {
+    if (!one.length || !two.length) {
       // Edges are the best.
       return 6;
     }
@@ -1013,14 +1013,14 @@ diff_match_patch.prototype.diff_cleanupSemanticLossless = function(diffs) {
 
       if (!this.isEqualString(diffs[pointer - 1][1], bestEquality1)) {
         // We have an improvement, save it back to the diff.
-        if (bestEquality1) {
+        if (bestEquality1.length) {
           diffs[pointer - 1][1] = bestEquality1;
         } else {
           diffs.splice(pointer - 1, 1);
           pointer--;
         }
         diffs[pointer][1] = bestEdit;
-        if (bestEquality2) {
+        if (bestEquality2.length) {
           diffs[pointer + 1][1] = bestEquality2;
         } else {
           diffs.splice(pointer + 1, 1);
@@ -1088,7 +1088,7 @@ diff_match_patch.prototype.diff_cleanupEfficiency = function(diffs) {
        * <ins>A</del>X<ins>C</ins><del>D</del>
        * <ins>A</ins><del>B</del>X<del>C</del>
        */
-      if (lastequality && ((pre_ins && pre_del && post_ins && post_del) ||
+      if (lastequality && lastequality.length && ((pre_ins && pre_del && post_ins && post_del) ||
                            ((lastequality.length < this.Diff_EditCost / 2) &&
                             (pre_ins + pre_del + post_ins + post_del) === 3))) {
         // Duplicate record.
@@ -1540,7 +1540,7 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
   // Highest score beyond which we give up.
   var score_threshold = this.Match_Threshold;
   // Is there a nearby exact match? (speedup)
-  var best_loc = dmp.indexOf(text, pattern, loc);
+  var best_loc = this.indexOf(text, pattern, loc);
   if (best_loc !== -1) {
     score_threshold = Math.min(match_bitapScore_(0, best_loc), score_threshold);
     // What about in the other direction? (speedup)
@@ -1668,13 +1668,13 @@ diff_match_patch.prototype.patch_addContext_ = function(patch, text) {
 
   // Add the prefix.
   var prefix = text.slice(Math.max(0, patch.start2 - padding), patch.start2);
-  if (prefix) {
+  if (prefix.length) {
     patch.diffs.unshift([DIFF_EQUAL, prefix]);
   }
   // Add the suffix.
   var suffix = text.slice(patch.start2 + patch.length1,
                               patch.start2 + patch.length1 + padding);
-  if (suffix) {
+  if (suffix.length) {
     patch.diffs.push([DIFF_EQUAL, suffix]);
   }
 
